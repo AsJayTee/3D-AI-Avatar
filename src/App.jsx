@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import GridFadeMenu from './components/GridFadeMenu';
+import Sidebar from './components/Sidebar';
 import { Canvas } from '@react-three/fiber';
 import { Experience } from './components/Experience';
 
@@ -19,7 +20,7 @@ function App() {
         <color attach = "background" args={["#ececec"]} />
         <Experience />
       </Canvas>
-
+      {!showMenu && <Sidebar />}
       {showMenu && (
         <GridFadeMenu 
           onClose={handleCloseMenu} 
