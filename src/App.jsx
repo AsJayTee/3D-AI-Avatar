@@ -1,9 +1,34 @@
+import { useState } from 'react';
+import GridFadeMenu from './components/GridFadeMenu';
+import { Canvas } from '@react-three/fiber';
+import { Experience } from './components/Experience';
 
 function App() {
+  const [showMenu, setShowMenu] = useState(true);
+
+  const handleCloseMenu = () => {
+    setShowMenu(false);
+  };
 
   return (
-    <h1>Hi!</h1>
-  )
+    <div className="relative h-screen w-full">
+      <Canvas
+        shadows
+        camera = {{ position: [3, 3, 3], fov: 30}}
+      >
+        <color attach = "background" args={["#ececec"]} />
+        <Experience />
+      </Canvas>
+
+      {showMenu && (
+        <GridFadeMenu 
+          onClose={handleCloseMenu} 
+          hasOverlay={true}
+          gridSize={{ rows: 8, cols: 12 }} 
+        />
+      )}
+    </div>
+  );
 }
 
-export default App
+export default App;
