@@ -15,7 +15,7 @@ function App() {
     <div className="relative h-screen w-full">
       <Canvas
         shadows
-        camera = {{ position: [3, 3, 3], fov: 30}}
+        camera = {{ position: [0, 0, 8], fov: 30}}
       >
         <color attach = "background" args={["#ececec"]} />
         <Experience />
