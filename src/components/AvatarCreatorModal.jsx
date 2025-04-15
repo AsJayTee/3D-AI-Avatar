@@ -1,52 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { AvatarCreator } from "@readyplayerme/react-avatar-creator";
-
-// Define animation keyframes as a styled component
-const AnimationStyles = () => (
-  <style jsx="true">{`
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.95) translateY(10px); }
-      to { opacity: 1; transform: scale(1) translateY(0); }
-    }
-    
-    @keyframes fadeOut {
-      from { opacity: 1; transform: scale(1) translateY(0); }
-      to { opacity: 0; transform: scale(0.95) translateY(10px); }
-    }
-    
-    .modal-enter {
-      animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-    
-    .modal-exit {
-      animation: fadeOut 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-  `}</style>
-);
+import {
+  AvatarCreator,
+} from "@readyplayerme/react-avatar-creator";
 
 const AvatarCreatorModal = ({ isOpen, onClose, onAvatarExported }) => {
-  const [animationState, setAnimationState] = useState('closed'); // 'closed', 'opening', 'open', 'closing'
+  const [isAnimating, setIsAnimating] = useState(false);
   
-  // Handle animation state changes
+  // Handle mount/unmount and animations
   useEffect(() => {
-    if (isOpen && animationState === 'closed') {
-      setAnimationState('opening');
+    if (isOpen) {
+      setIsAnimating(true);
+    } else if (isAnimating) {
+      // Add delay before fully removing from DOM
       const timer = setTimeout(() => {
-        setAnimationState('open');
-      }, 50); // Small delay to ensure CSS transition starts properly
-      return () => clearTimeout(timer);
-    } 
-    else if (!isOpen && (animationState === 'open' || animationState === 'opening')) {
-      setAnimationState('closing');
-      const timer = setTimeout(() => {
-        setAnimationState('closed');
-      }, 400); // Match this to the animation duration
+        setIsAnimating(false);
+      }, 400); // Match animation duration
       return () => clearTimeout(timer);
     }
-  }, [isOpen, animationState]);
+  }, [isOpen, isAnimating]);
   
-  // Don't render anything if completely closed
-  if (animationState === 'closed' && !isOpen) return null;
+  // Handle body scroll locking
+  useEffect(() => {
+    if (isOpen || isAnimating) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [isOpen, isAnimating]);
+  
+  // Don't render if not open and not animating
+  if (!isOpen && !isAnimating) return null;
   
   const config = {
     clearCache: true,
@@ -57,36 +44,38 @@ const AvatarCreatorModal = ({ isOpen, onClose, onAvatarExported }) => {
 
   const style = { width: "100%", height: "100%", border: "none" };
 
-  const handleClose = () => {
-    onClose();
-  };
-
   const handleOnAvatarExported = (event) => {
-    console.log(`Avatar URL is: ${event.data.url}`);
     if (onAvatarExported) {
       onAvatarExported(event.data.url);
     }
-    handleClose();
+    onClose();
   };
 
-  const handleOnUserSet = (event) => {
-    console.log(`User ID is: ${event.data.id}`);
-  };
-
-  const handleUserAuthorized = (event) => {
-    console.log(`User is:`, event.data);
-  };
-
-  const handleAssetUnlocked = (event) => {
-    console.log(`Asset unlocked is: ${event.data.assetId}`);
-  };
-
-  const isAnimating = animationState === 'opening' || animationState === 'closing';
-  const animationClass = animationState === 'closing' ? 'modal-exit' : 'modal-enter';
+  const animationClass = isOpen ? 'modal-enter' : 'modal-exit';
 
   return (
     <>
-      <AnimationStyles />
+      <style jsx="true">{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        
+        @keyframes fadeOut {
+          from { opacity: 1; transform: scale(1); }
+          to { opacity: 0; transform: scale(0.95); }
+        }
+        
+        .modal-enter {
+          animation: fadeIn 0.3s forwards;
+        }
+        
+        .modal-exit {
+          animation: fadeOut 0.4s forwards;
+          pointer-events: none !important;
+        }
+      `}</style>
+      
       <div 
         className={`fixed inset-0 z-50 flex items-center justify-center ${animationClass}`}
         style={{ 
@@ -96,8 +85,8 @@ const AvatarCreatorModal = ({ isOpen, onClose, onAvatarExported }) => {
       >
         <div className="relative w-full h-full">
           <button 
-            className="absolute top-4 right-4 z-10 bg-white rounded-full p-2 shadow-lg transition-transform duration-300 hover:scale-110"
-            onClick={handleClose}
+            className="absolute top-4 right-4 z-10 bg-white rounded-full p-2 shadow-lg hover:scale-110 transition-transform duration-300"
+            onClick={onClose}
             aria-label="Close avatar creator"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -111,9 +100,9 @@ const AvatarCreatorModal = ({ isOpen, onClose, onAvatarExported }) => {
             config={config}
             style={style}
             onAvatarExported={handleOnAvatarExported}
-            onUserAuthorized={handleUserAuthorized}
-            onAssetUnlock={handleAssetUnlocked}
-            onUserSet={handleOnUserSet}
+            onUserSet={(event) => console.log(`User ID is: ${event.data.id}`)}
+            onUserAuthorized={(event) => console.log(`User is:`, event.data)}
+            onAssetUnlock={(event) => console.log(`Asset unlocked is: ${event.data.assetId}`)}
           />
         </div>
       </div>
